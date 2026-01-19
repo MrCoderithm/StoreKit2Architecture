@@ -1,311 +1,266 @@
-StoreKit 2 Architecture Demo (SwiftUI + MVVM)
+# 🛒 StoreKit 2 Architecture Demo  
+### SwiftUI • MVVM • StoreKit 2 • Async/Await
 
-A production-style demonstration of StoreKit 2 implemented using SwiftUI and MVVM, showcasing how to handle in-app purchases, subscriptions, consumables, transaction verification, pending states, and local inventory in a clean and maintainable architecture.
+A **production-style demonstration** of Apple’s **StoreKit 2** APIs built with **SwiftUI** and a clean **MVVM architecture**.  
+This project showcases how to correctly implement **in-app purchases, subscriptions, consumables, transaction verification, pending states, and local inventory** in a scalable and maintainable way.
 
-This project is intentionally structured to mirror real-world StoreKit implementations, not just minimal examples.
+> This is **not** a minimal tutorial — it is intentionally designed to mirror **real-world StoreKit implementations**.
 
-✨ Features
+---
 
-✅ StoreKit 2 APIs (async/await)
+## ✨ Features
 
-✅ Non-Consumable purchases
+- ✅ StoreKit 2 (async/await)
+- ✅ Non-Consumable purchases
+- ✅ Consumables with **local inventory tracking**
+- ✅ Non-Renewable subscriptions (custom expiration logic)
+- ✅ Auto-Renewable subscriptions
+- ✅ Pending purchase states (Ask to Buy)
+- ✅ Promo code redemption (Offer Code sheet)
+- ✅ Restore purchases
+- ✅ Refund requests & subscription management
+- ✅ Clean MVVM separation
+- ✅ Transaction verification & background updates
+- ✅ SwiftUI-first UI layer
 
-✅ Consumable purchases with local inventory tracking
+---
 
-✅ Non-Renewable subscriptions with expiration logic
+## 🧠 Key Concepts Demonstrated
 
-✅ Auto-Renewable subscriptions with status tracking
+This project focuses on **correct StoreKit mental models**, not shortcuts:
 
-✅ Promo code redemption (Offer Code sheet)
+- **Consumables ≠ Entitlements**
+- **Transactions can complete later**
+- **Every transaction must be verified**
+- **UI must never call StoreKit directly**
+- **State must persist across app restarts**
+- **Pending purchases must be visible to users**
 
-✅ Restore purchases
+---
 
-✅ Pending purchase UI states
+## 🧱 Architecture Overview
 
-✅ Refund & subscription management (system UI)
-
-✅ Clean MVVM separation
-
-✅ SwiftUI-first UI layer
-
-✅ Transaction verification & background updates
-
-🧠 Core Concepts Demonstrated
-
-This app focuses on correct mental models for StoreKit 2:
-
-Entitlements ≠ Consumables
-
-Transactions may complete later
-
-Verification is mandatory
-
-UI should never talk to StoreKit directly
-
-State must survive app restarts
-
-Pending purchases must be visible to users
-
-🧱 Architecture Overview
-
-This project follows a three-layer MVVM architecture:
+The app follows a **three-layer MVVM architecture**:
 
 SwiftUI Views
-      ↓
+↓
 StoreViewModel
-      ↓
+↓
 StoreDataService (StoreKit 2)
 
-1️⃣ View Layer (SwiftUI)
+yaml
+Copy code
 
-Responsibility: UI only
+---
 
-Renders state provided by the ViewModel
+## 🖼 View Layer (SwiftUI)
 
-Displays products, prices, purchase status, and errors
+**Responsibility: UI only**
 
-Shows loading / pending / success states
+- Renders state provided by the ViewModel
+- Displays products, prices, purchase status, and errors
+- Shows loading / pending / success states
+- Triggers user intent (buy, restore, redeem)
 
-Never calls StoreKit APIs directly
+**Does NOT:**
+- Talk to StoreKit
+- Verify transactions
+- Persist data
 
-Example responsibilities:
+---
 
-Show “Buy”, “Pending…”, or “Purchased”
+## 🧠 ViewModel Layer (`StoreViewModel`)
 
-Present Store view
+**Responsibility: UI-ready state + user intents**
 
-Trigger user intents (buy, restore, redeem code)
+The ViewModel acts as the **bridge** between UI and StoreKit logic.
 
-2️⃣ ViewModel Layer (StoreViewModel)
+### Exposes state such as:
+- `nonConsumables`
+- `consumables`
+- `autoRenewables`
+- `pendingProductIDs`
+- `consumableBalances`
+- `purchaseStatus`
 
-Responsibility: UI-ready state + user intents
+### Exposes user intents:
+- `purchase(product:)`
+- `restorePurchases`
+- `presentPromoCodeRedemption()`
+- `showManageSubscriptions()`
+- `requestRefund(productID:)`
 
-The ViewModel acts as the bridge between SwiftUI and StoreKit logic.
+The ViewModel:
+- Translates StoreKit events into UI-friendly state
+- Handles alerts and error messaging
+- Never talks to StoreKit directly
 
-It:
+---
 
-Exposes observable properties for UI:
+## 🛠 Service Layer (`StoreDataService`)
 
-nonConsumables
+**Responsibility: Single source of truth for StoreKit**
 
-consumables
+This layer encapsulates **all StoreKit 2 logic** and is marked `@MainActor` to guarantee safe UI updates.
 
-subscriptions
+### Handles:
+- Product loading (`Product.products`)
+- Purchase flow (`product.purchase()`)
+- Transaction verification
+- Finishing transactions
+- Listening to `Transaction.updates`
+- Tracking pending purchases
+- Persisting consumable inventory
+- Subscription status & refunds
 
-pendingProductIDs
+---
 
-consumableBalances
+## 🧾 Purchase Types Explained
 
-Translates raw StoreKit events into UI-friendly state
+### 🔹 Non-Consumables
+- One-time purchase
+- Stored in entitlements
+- UI shows a **green checkmark** after purchase
 
-Handles alerts and error messages
+---
 
-Forwards user actions to the service layer
+### 🔹 Consumables
+- Can be purchased multiple times
+- **Never appear in entitlements**
+- Stored locally as inventory (UserDefaults / AppStorage)
+- UI reflects **balance**, not ownership
 
-The ViewModel does not:
+> Consumables are **inventory**, not entitlements.
 
-Talk to StoreKit directly
+---
 
-Verify transactions
+### 🔹 Non-Renewables
+- Time-limited access
+- Custom expiration logic (1 year)
+- Must be manually validated against purchase date
 
-Persist inventory
+---
 
-3️⃣ Service Layer (StoreDataService)
+### 🔹 Auto-Renewable Subscriptions
+- Managed by the App Store
+- Status derived from subscription group state
+- Cancellation handled via system UI
 
-Responsibility: Single source of truth for StoreKit
+---
 
-This layer encapsulates all StoreKit 2 logic and is marked @MainActor to guarantee safe UI updates.
+## ⏳ Pending Purchases
 
-It handles:
-
-🔹 Product Loading
-Product.products(for: productIDs)
-
-🔹 Purchasing Flow
-try await product.purchase()
-
-
-Handles .success, .pending, .userCancelled
-
-Verifies every transaction
-
-Finishes transactions
-
-Updates published state
-
-🔹 Transaction Verification
-VerificationResult<T>
-
-
-Every transaction is cryptographically verified before being accepted.
-
-🔹 Transaction Updates
-for await update in Transaction.updates
-
-
-Ensures:
-
-Purchases completed later are handled
-
-Pending states are resolved
-
-Inventory is updated even if app restarts
-
-🔹 Consumable Inventory (Important)
-
-Consumables do not appear in entitlements.
+Some purchases require approval (e.g. **Ask to Buy**).
 
 This app:
+- Tracks pending purchases by product ID
+- Disables purchase buttons while pending
+- Shows loading indicators
+- Resolves state via `Transaction.updates`
 
-Stores consumable balances locally using UserDefaults
+---
 
-Treats consumables as inventory, not ownership
+## 🎟 Promo Code Redemption
 
-Exposes balances to UI via published state
+Promo codes are redeemed using Apple’s **system UI**:
 
-🔹 Subscription Management
-
-Reads subscription group status
-
-Opens Apple’s system subscription management UI
-
-Requests refunds using StoreKit APIs
-
-🧾 Purchase Types Explained
-🔸 Non-Consumables
-
-One-time purchase
-
-Stored in entitlements
-
-UI shows green checkmark after purchase
-
-🔸 Consumables
-
-Purchased multiple times
-
-Never stored in entitlements
-
-Balance tracked locally
-
-UI reflects inventory count instead of “purchased”
-
-🔸 Non-Renewables
-
-Time-limited access
-
-Custom expiration logic implemented (1 year)
-
-Requires manual validation against purchase date
-
-🔸 Auto-Renewables (Subscriptions)
-
-Managed by App Store
-
-Status determined by subscription group state
-
-Cancelation handled via system UI
-
-⏳ Pending Purchases
-
-Some purchases require external approval (e.g., Ask to Buy).
-
-This app:
-
-Tracks pending purchases by product ID
-
-Disables purchase buttons while pending
-
-Shows loading indicators
-
-Resolves pending states via Transaction.updates
-
-🎟 Promo Codes
-
-Promo codes are redeemed using Apple’s system UI:
-
+```swift
 AppStore.presentOfferCodeRedeemSheet(in: scene)
-
-
-This ensures:
-
-App Store compliance
-
-Secure redemption
-
-No custom code entry UI required
+✔ Secure
+✔ App Store compliant
+✔ No custom input UI required
 
 🔁 Restore Purchases
+Handled using:
 
-Handled via:
-
+swift
+Copy code
 AppStore.sync()
-
-
-Which:
+This:
 
 Re-syncs entitlements
 
-Rebuilds purchased product lists
+Restores purchases on new devices
 
-Restores access on new devices
+Updates UI state automatically
 
-🧪 Why @MainActor Matters
+🔐 Transaction Verification
+Every transaction is verified using:
 
-StoreKit publishes state that drives UI.
+swift
+Copy code
+VerificationResult<T>
+Unverified transactions are never trusted.
 
-By marking:
+This ensures:
 
-StoreDataService
+Security
 
-StoreViewModel
+App Store compliance
 
-as @MainActor, we guarantee:
+Protection against tampering
 
-UI updates happen on the main thread
+🧵 Why @MainActor Is Used
+Both StoreDataService and StoreViewModel are @MainActor isolated to:
 
-No race conditions
+Guarantee UI-safe updates
 
-Cleaner async code without DispatchQueue.main.async
+Avoid race conditions
 
-🧼 Why This Architecture Scales
+Simplify async/await flows
 
-This architecture makes it easy to:
-
-Add new product types
-
-Change UI without touching StoreKit logic
-
-Test business logic separately
-
-Handle StoreKit edge cases cleanly
-
-Reason about purchase state confidently
-
-It also matches patterns used in production apps, not just tutorials.
+Remove unnecessary dispatching
 
 🚀 Getting Started
-
 Open the project in Xcode
 
 Enable In-App Purchase capability
 
 Attach Store.storekit to the Run scheme
 
-Run on simulator or device
+Run on Simulator or Device
 
-Use StoreKit testing or sandbox accounts
+Use StoreKit Testing or Sandbox accounts
 
-📌 Final Notes
+📌 Why This Architecture Scales
+This architecture makes it easy to:
 
-This project is designed to be:
+Add new product types
 
-Educational
+Change UI without touching StoreKit logic
 
-Interview-ready
+Handle StoreKit edge cases cleanly
 
-Presentation-ready
+Debug purchase issues confidently
 
-Production-inspired
+Build production-ready purchase flows
 
-If you understand this codebase, you understand modern StoreKit 2 architecture.
+🎤 Presentation / Interview Ready
+If you can explain this codebase, you can explain:
+
+Modern StoreKit 2
+
+Async/await architecture
+
+Transaction verification
+
+Consumable vs entitlement logic
+
+Real-world iOS monetization patterns
+
+📄 License
+This project is provided for educational and demonstration purposes.
+
+Built with ❤️ using SwiftUI, StoreKit 2, and MVVM
+
+yaml
+Copy code
+
+---
+
+If you want next:
+- a **shorter “interview version”** of the README
+- an **architecture diagram (ASCII or image)**
+- or **inline documentation comments** for teaching  
+
+just tell me 👍
