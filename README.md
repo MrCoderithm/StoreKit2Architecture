@@ -42,14 +42,13 @@ This project focuses on **correct StoreKit mental models**, not shortcuts:
 
 The app follows a **three-layer MVVM architecture**:
 
+```
 SwiftUI Views
-↓
+      ↓
 StoreViewModel
-↓
+      ↓
 StoreDataService (StoreKit 2)
-
-yaml
-Copy code
+```
 
 ---
 
@@ -122,24 +121,16 @@ This layer encapsulates **all StoreKit 2 logic** and is marked `@MainActor` to g
 - Stored in entitlements
 - UI shows a **green checkmark** after purchase
 
----
-
 ### 🔹 Consumables
 - Can be purchased multiple times
 - **Never appear in entitlements**
 - Stored locally as inventory (UserDefaults / AppStorage)
 - UI reflects **balance**, not ownership
 
-> Consumables are **inventory**, not entitlements.
-
----
-
 ### 🔹 Non-Renewables
 - Time-limited access
 - Custom expiration logic (1 year)
 - Must be manually validated against purchase date
-
----
 
 ### 🔹 Auto-Renewable Subscriptions
 - Managed by the App Store
@@ -166,101 +157,90 @@ Promo codes are redeemed using Apple’s **system UI**:
 
 ```swift
 AppStore.presentOfferCodeRedeemSheet(in: scene)
-✔ Secure
-✔ App Store compliant
-✔ No custom input UI required
+```
 
-🔁 Restore Purchases
-Handled using:
-
-swift
-Copy code
-AppStore.sync()
-This:
-
-Re-syncs entitlements
-
-Restores purchases on new devices
-
-Updates UI state automatically
-
-🔐 Transaction Verification
-Every transaction is verified using:
-
-swift
-Copy code
-VerificationResult<T>
-Unverified transactions are never trusted.
-
-This ensures:
-
-Security
-
-App Store compliance
-
-Protection against tampering
-
-🧵 Why @MainActor Is Used
-Both StoreDataService and StoreViewModel are @MainActor isolated to:
-
-Guarantee UI-safe updates
-
-Avoid race conditions
-
-Simplify async/await flows
-
-Remove unnecessary dispatching
-
-🚀 Getting Started
-Open the project in Xcode
-
-Enable In-App Purchase capability
-
-Attach Store.storekit to the Run scheme
-
-Run on Simulator or Device
-
-Use StoreKit Testing or Sandbox accounts
-
-📌 Why This Architecture Scales
-This architecture makes it easy to:
-
-Add new product types
-
-Change UI without touching StoreKit logic
-
-Handle StoreKit edge cases cleanly
-
-Debug purchase issues confidently
-
-Build production-ready purchase flows
-
-🎤 Presentation / Interview Ready
-If you can explain this codebase, you can explain:
-
-Modern StoreKit 2
-
-Async/await architecture
-
-Transaction verification
-
-Consumable vs entitlement logic
-
-Real-world iOS monetization patterns
-
-📄 License
-This project is provided for educational and demonstration purposes.
-
-Built with ❤️ using SwiftUI, StoreKit 2, and MVVM
-
-yaml
-Copy code
+✔ Secure  
+✔ App Store compliant  
+✔ No custom input UI required  
 
 ---
 
-If you want next:
-- a **shorter “interview version”** of the README
-- an **architecture diagram (ASCII or image)**
-- or **inline documentation comments** for teaching  
+## 🔁 Restore Purchases
 
-just tell me 👍
+Handled using:
+
+```swift
+AppStore.sync()
+```
+
+This:
+- Re-syncs entitlements
+- Restores purchases on new devices
+- Updates UI state automatically
+
+---
+
+## 🔐 Transaction Verification
+
+Every transaction is verified using:
+
+```swift
+VerificationResult<T>
+```
+
+Unverified transactions are **never trusted**.
+
+---
+
+## 🧵 Why `@MainActor` Is Used
+
+Both `StoreDataService` and `StoreViewModel` are `@MainActor` isolated to:
+
+- Guarantee UI-safe updates
+- Avoid race conditions
+- Simplify async/await flows
+- Remove unnecessary dispatching
+
+---
+
+## 🚀 Getting Started
+
+1. Open the project in Xcode
+2. Enable **In-App Purchase** capability
+3. Attach `Store.storekit` to the Run scheme
+4. Run on Simulator or Device
+5. Use StoreKit Testing or Sandbox accounts
+
+---
+
+## 📌 Why This Architecture Scales
+
+This architecture makes it easy to:
+
+- Add new product types
+- Change UI without touching StoreKit logic
+- Handle StoreKit edge cases cleanly
+- Debug purchase issues confidently
+- Build production-ready purchase flows
+
+---
+
+## 🎤 Presentation / Interview Ready
+
+If you can explain this codebase, you can explain:
+
+- Modern StoreKit 2
+- Async/await architecture
+- Transaction verification
+- Consumable vs entitlement logic
+- Real-world iOS monetization patterns
+
+---
+
+## 📄 License
+
+This project is provided for **educational and demonstration purposes**.
+
+---
+
+**Built with ❤️ using SwiftUI, StoreKit 2, and MVVM**
