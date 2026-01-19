@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct StoreKit2ArchitectureApp: App {
+    @State var store = StoreViewModel()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            UnlocksListView(vm: UnlocksViewModel())
+                .environmentObject(store)
         }
     }
 }
